@@ -18,27 +18,22 @@ import androidx.core.content.res.ResourcesCompat
  * разделительные линии
  */
 class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
+    private var leftThumb: Thumb
+    private var rightThumb: Thumb
+
     private var screenHeight = 0f
-    private var leftThumbDrawable: Drawable? = null
-    private var rigthThumbDrawable: Drawable? = null
-    private var activeLineColor: Int = 0
-    private var defaultLineColor: Int = 0
-    private var lineHeight: Int = 0
-    private var startRangleValue = 0
-    private var endRangeValue = 100
-    private var thumbDrawableSize = Size()
-    private var horizontalScrollPosition = 0
-    private var leftThumbBound = Rect()
-    private var leftThumbTouchBound = Rect()
-    private var rightThumbBound = Rect()
-    private var rightThumbTouchBound = Rect()
+    private var activeLineColor = 0
+    private var defaultLineColor = 0
+    private var lineHeight = 0
     private var touchPadding = 0
     private var seekBarPadding = 0
 
     init {
+        var leftThumbDrawable: Drawable? = null
+        var rightThumbDrawable: Drawable? = null
         context?.apply {
             leftThumbDrawable = ResourcesCompat.getDrawable(resources, R.drawable.test, null)
-            rigthThumbDrawable = ResourcesCompat.getDrawable(resources, R.drawable.test, null)
+            rightThumbDrawable = ResourcesCompat.getDrawable(resources, R.drawable.test, null)
             activeLineColor = ContextCompat.getColor(this, R.color.blue_52_172_250)
             defaultLineColor = ContextCompat.getColor(this, R.color.grey_229_232_237)
             lineHeight = resources.getDimensionPixelSize(R.dimen.size_1dp)
@@ -48,34 +43,34 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
 
         val width = leftThumbDrawable?.intrinsicWidth ?: 0
         val height = leftThumbDrawable?.intrinsicHeight ?: 0
-        thumbDrawableSize = Size(width, height)
+        val thumbDrawableSize = Size(width, height)
+
+        val leftThumbBound = Rect()
         leftThumbBound.left = seekBarPadding
         leftThumbBound.right = leftThumbBound.left + thumbDrawableSize.width
+
+        val rightThumbBound = Rect()
+        leftThumb = Thumb(leftThumbDrawable, leftThumbBound, thumbDrawableSize)
+        rightThumb = Thumb(rightThumbDrawable, rightThumbBound, thumbDrawableSize)
     }
 
     override fun onSizeChanged(newWidth: Int, newHeight: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(newWidth, newHeight, oldw, oldh)
         screenHeight = newHeight.toFloat()
-        leftThumbBound.top = ((screenHeight - thumbDrawableSize.height) / 2).toInt()
-        leftThumbBound.bottom = (screenHeight - leftThumbBound.top).toInt()
-        leftThumbTouchBound.top = leftThumbBound.top + touchPadding
-        leftThumbTouchBound.bottom = leftThumbBound.bottom + touchPadding
+        leftThumb.screenSizeChanged(newHeight)
+        rightThumb.screenSizeChanged(newHeight)
 
-        rightThumbBound.right = newWidth - seekBarPadding
-        rightThumbBound.left = rightThumbBound.right - thumbDrawableSize.width
-        rightThumbBound.top = leftThumbBound.top
-        rightThumbBound.bottom = leftThumbBound.bottom
+        rightThumb.thumbBound.right = newWidth - seekBarPadding
+        rightThumb.thumbBound.left = rightThumb.thumbBound.right -
+                rightThumb.thumbDrawableSize.width
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         val usingCanvas = canvas ?: return
 
-        leftThumbDrawable?.bounds = leftThumbBound
-        leftThumbDrawable?.draw(usingCanvas)
-
-        rigthThumbDrawable?.bounds = rightThumbBound
-        rigthThumbDrawable?.draw(usingCanvas)
+        leftThumb.draw(usingCanvas)
+        rightThumb.draw(usingCanvas)
     }
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
@@ -83,8 +78,8 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
         private var clickRightThumb = false
 
         override fun onDown(e: MotionEvent): Boolean {
-            clickLeftThumb = leftThumbBound.contains(e.x.toInt(), e.y.toInt())
-            clickRightThumb = rightThumbBound.contains(e.x.toInt(), e.y.toInt())
+            clickLeftThumb = leftThumb.thumbBound.contains(e.x.toInt(), e.y.toInt())
+            clickRightThumb = rightThumb.thumbBound.contains(e.x.toInt(), e.y.toInt())
             Log.d("testScroll", "onScroll() contains = $clickLeftThumb")
             return clickLeftThumb
         }
@@ -96,24 +91,26 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
         ): Boolean {
             val it = e2 ?: return true
             if (clickLeftThumb) {
-                leftThumbBound.left = if (it.x <= thumbDrawableSize.width / 2 + seekBarPadding) {
+                val leftBorder = leftThumb.thumbDrawableSize.width / 2 + seekBarPadding
+                val rightBorder = width - leftThumb.thumbDrawableSize.width / 2 - seekBarPadding
+                leftThumb.thumbBound.left = if (it.x <= leftBorder) {
                     seekBarPadding
-                } else if (it.x >= width - thumbDrawableSize.width / 2 - seekBarPadding) {
-                    width - thumbDrawableSize.width - seekBarPadding
+                } else if (it.x >= rightBorder) {
+                    width - leftThumb.thumbDrawableSize.width - seekBarPadding
                 } else {
-                    (it.x - thumbDrawableSize.width / 2).toInt()
+                    (it.x - leftThumb.thumbDrawableSize.width / 2).toInt()
                 }
-                leftThumbBound.right = leftThumbBound.left + thumbDrawableSize.width
+                leftThumb.thumbBound.right = leftThumb.thumbBound.left + leftThumb.thumbDrawableSize.width
                 invalidate()
             } else if (clickRightThumb) {
-                rightThumbBound.left = if (it.x <= thumbDrawableSize.width / 2 + seekBarPadding) {
+                rightThumb.thumbBound.left = if (it.x <= leftThumb.thumbDrawableSize.width / 2 + seekBarPadding) {
                     seekBarPadding
-                } else if (it.x >= width - thumbDrawableSize.width / 2 - seekBarPadding) {
-                    width - thumbDrawableSize.width - seekBarPadding
+                } else if (it.x >= width - leftThumb.thumbDrawableSize.width / 2 - seekBarPadding) {
+                    width - leftThumb.thumbDrawableSize.width - seekBarPadding
                 } else {
-                    (it.x - thumbDrawableSize.width / 2).toInt()
+                    (it.x - leftThumb.thumbDrawableSize.width / 2).toInt()
                 }
-                rightThumbBound.right = rightThumbBound.left + thumbDrawableSize.width
+                rightThumb.thumbBound.right = rightThumb.thumbBound.left + leftThumb.thumbDrawableSize.width
                 invalidate()
             }
 
