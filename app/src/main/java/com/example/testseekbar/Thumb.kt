@@ -4,14 +4,14 @@ import android.graphics.Canvas
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
 
-class Thumb(val drawable: Drawable?, val bound: Rect) {
+class Thumb(private val drawable: Drawable?, val bound: Rect) {
 
-    val width: Int
-    val height: Int
+    val width: Int = drawable?.intrinsicWidth ?: 0
+    private val height: Int = drawable?.intrinsicHeight ?: 0
+    val halfWidth: Int
 
     init {
-        width = drawable?.intrinsicWidth ?: 0
-        height = drawable?.intrinsicHeight ?: 0
+        halfWidth = width / 2
     }
 
     fun screenSizeChanged(newHeight: Int) {

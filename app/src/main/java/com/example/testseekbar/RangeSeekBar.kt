@@ -80,15 +80,15 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
                               distanceY: Float): Boolean {
             val it = e2 ?: return true
 
-            val leftBorder = leftThumb.width / 2 + seekBarPadding
-            val rightBorder = width - leftThumb.width / 2 - seekBarPadding
+            val leftBorder = leftThumb.halfWidth + seekBarPadding
+            val rightBorder = width - leftThumb.halfWidth - seekBarPadding
             if (clickLeftThumb) {
                 val leftPosition = if (it.x <= leftBorder) {
                     seekBarPadding
                 } else if (it.x >= rightBorder) {
-                    width - leftThumb.width - seekBarPadding
+                    rightBorder - leftThumb.halfWidth
                 } else {
-                    (it.x - leftThumb.width / 2).toInt()
+                    (it.x - leftThumb.halfWidth).toInt()
                 }
                 leftThumb.updateLeftPosition(leftPosition)
                 invalidate()
@@ -96,9 +96,9 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
                 val leftPosition = if (it.x <= leftBorder) {
                     seekBarPadding
                 } else if (it.x >= rightBorder) {
-                    width - leftThumb.width - seekBarPadding
+                    rightBorder - leftThumb.halfWidth
                 } else {
-                    (it.x - leftThumb.width / 2).toInt()
+                    (it.x - leftThumb.halfWidth).toInt()
                 }
 
                 rightThumb.updateLeftPosition(leftPosition)
