@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <dimen name="size_40dp">40dp</dimen>
-    <dimen name="size_1dp">1dp</dimen>
+    <dimen name="size_3dp">3dp</dimen>
     <dimen name="size_5dp">5dp</dimen>
     <dimen name="size_22dp">22dp</dimen>
 </resources>

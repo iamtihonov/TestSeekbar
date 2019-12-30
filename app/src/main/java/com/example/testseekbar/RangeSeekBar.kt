@@ -2,10 +2,7 @@ package com.example.testseekbar
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
-import android.graphics.Rect
+import android.graphics.*
 import android.util.AttributeSet
 import android.util.Log
 import android.view.GestureDetector
@@ -24,19 +21,24 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     private val testPaint = Paint()
 
     private var screenHeight = 0f
+    private var screenWidth = 0f
+
     private var activeLineColor = 0
     private var defaultLineColor = 0
     private var lineHeight = 0
     private var touchPadding = 0
     private var seekBarPadding = 0
-    private var leftBorder = 0
-    private var rightBorder = 0
+    private var leftBorder = 0.0f
+    private var rightBorder = 0.0f
+    private var defaultLinePaint = Paint()
+    private var lineTopPosition = 0.0f
+    private var lineBottomPosition = 0.0f
 
     init {
         context?.apply {
             activeLineColor = ContextCompat.getColor(this, R.color.blue_52_172_250)
             defaultLineColor = ContextCompat.getColor(this, R.color.grey_229_232_237)
-            lineHeight = resources.getDimensionPixelSize(R.dimen.size_1dp)
+            lineHeight = resources.getDimensionPixelSize(R.dimen.size_3dp)
             touchPadding = resources.getDimensionPixelSize(R.dimen.size_5dp)
             seekBarPadding = resources.getDimensionPixelSize(R.dimen.size_22dp)
         }
@@ -44,38 +46,51 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
         val leftThumbDrawable = ResourcesCompat.getDrawable(resources, R.drawable.test, null)
         val rightThumbDrawable = ResourcesCompat.getDrawable(resources, R.drawable.test, null)
 
-        val leftThumbBound = Rect()
-        leftThumbBound.left = seekBarPadding
+        val leftThumbBound = RectF()
+        leftThumbBound.left = seekBarPadding.toFloat()
         leftThumb = Thumb(leftThumbDrawable, leftThumbBound)
-        rightThumb = Thumb(rightThumbDrawable, Rect())
+        rightThumb = Thumb(rightThumbDrawable, RectF())
 
         leftThumbBound.right = leftThumbBound.left + leftThumb.width
         testPaint.color = Color.RED
+
+        defaultLinePaint.color = defaultLineColor
+        defaultLinePaint.style = Paint.Style.FILL
+
+        lineTopPosition
     }
 
     override fun onSizeChanged(newWidth: Int, newHeight: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(newWidth, newHeight, oldw, oldh)
         screenHeight = newHeight.toFloat()
+        screenWidth = newWidth.toFloat()
+
         leftThumb.screenSizeChanged(newHeight)
         rightThumb.screenSizeChanged(newHeight)
 
-        rightThumb.bound.right = newWidth - seekBarPadding
+        rightThumb.bound.right = (newWidth - seekBarPadding).toFloat()
         rightThumb.bound.left = rightThumb.bound.right - rightThumb.width
 
-        leftBorder = seekBarPadding
-        rightBorder = newWidth - seekBarPadding
+        leftBorder = seekBarPadding.toFloat()
+        rightBorder = (newWidth - seekBarPadding).toFloat()
+        lineTopPosition = ((newHeight / 2) - (lineHeight / 2)).toFloat()
+        lineBottomPosition = lineTopPosition + lineHeight
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         val usingCanvas = canvas ?: return
+        drawTestLines(usingCanvas)
 
-        usingCanvas.drawLine(leftBorder.toFloat(), 0.0f, leftBorder.toFloat(),
-            height.toFloat(), testPaint)
-        usingCanvas.drawLine(rightBorder.toFloat(), 0.0f, rightBorder.toFloat(),
-            height.toFloat(), testPaint)
+        usingCanvas.drawRect(leftBorder, lineTopPosition, rightBorder, lineBottomPosition,
+            defaultLinePaint)
         leftThumb.draw(usingCanvas)
         rightThumb.draw(usingCanvas)
+    }
+
+    private fun drawTestLines(usingCanvas: Canvas) {
+        usingCanvas.drawLine(leftBorder, 0.0f, leftBorder, height.toFloat(), testPaint)
+        usingCanvas.drawLine(rightBorder, 0.0f, rightBorder, height.toFloat(), testPaint)
     }
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
@@ -109,7 +124,7 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     }
 
     @Suppress("CascadeIf")
-    private fun getLeftPosition(it: MotionEvent, isLeft: Boolean): Int {
+    private fun getLeftPosition(it: MotionEvent, isLeft: Boolean): Float {
         val halfWidth = leftThumb.halfWidth
         val usingLeftBorder = if(isLeft) {//С учетом текущего положения второй перделки
             leftBorder
@@ -128,7 +143,7 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
         } else if (it.x >= usingRightBorder - halfWidth) {
             usingRightBorder - leftThumb.width
         } else {
-            (it.x - halfWidth).toInt()
+            it.x - halfWidth
         }
     }
 
