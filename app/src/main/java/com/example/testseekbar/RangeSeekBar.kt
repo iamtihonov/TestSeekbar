@@ -18,7 +18,6 @@ import androidx.core.content.res.ResourcesCompat
  * разделительные линии
  */
 class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
-
     private var screenHeight = 0f
     private var thumbDrawable: Drawable? = null
     private var activeLineColor: Int = 0
@@ -28,7 +27,10 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     private var endRangeValue = 100
     private var thumbDrawableSize = Size()
     private var horizontalScrollPosition = 0
-    private var thumbBound = Rect()
+    private var leftThumbBound = Rect()
+    private var leftThumbTouchBound = Rect()
+    private var touchPadding = 0
+    private var seekBarPadding = 0
 
     init {
         context?.apply {
@@ -36,33 +38,37 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
             activeLineColor = ContextCompat.getColor(this, R.color.blue_52_172_250)
             defaultLineColor = ContextCompat.getColor(this, R.color.grey_229_232_237)
             lineHeight = resources.getDimensionPixelSize(R.dimen.size_1dp)
+            touchPadding = resources.getDimensionPixelSize(R.dimen.size_5dp)
+            seekBarPadding = resources.getDimensionPixelSize(R.dimen.size_22dp)
         }
 
         val width = thumbDrawable?.intrinsicWidth ?: 0
         val height =  thumbDrawable?.intrinsicHeight ?: 0
         thumbDrawableSize = Size(width, height)
-        thumbBound.left = 0
-        thumbBound.right = thumbBound.left + thumbDrawableSize.width
+        leftThumbBound.left = seekBarPadding
+        leftThumbBound.right = leftThumbBound.left + thumbDrawableSize.width
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         screenHeight = h.toFloat()
-        thumbBound.top = ((screenHeight - thumbDrawableSize.height) / 2).toInt()
-        thumbBound.bottom = (screenHeight - thumbBound.top).toInt()
+        leftThumbBound.top = ((screenHeight - thumbDrawableSize.height) / 2).toInt()
+        leftThumbBound.bottom = (screenHeight - leftThumbBound.top).toInt()
+        leftThumbTouchBound.top = leftThumbBound.top + touchPadding
+        leftThumbTouchBound.bottom = leftThumbBound.bottom + touchPadding
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         val usingCanvas = canvas ?: return
 
-        thumbDrawable?.bounds = thumbBound
+        thumbDrawable?.bounds = leftThumbBound
         thumbDrawable?.draw(usingCanvas)
     }
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
         override fun onDown(e: MotionEvent): Boolean {
-            return true
+            return leftThumbBound.contains(e.x.toInt(), e.y.toInt())
         }
 
         @Suppress("CascadeIf")
@@ -71,14 +77,14 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
             Log.d("testScroll", "onScroll() x1 = ${e1?.x}")
             Log.d("testScroll", "onScroll() x2 = ${e2?.x}")
             e2?.let {
-                thumbBound.left = if(it.x <= thumbDrawableSize.width / 2) {
-                    0
-                } else if(it.x >= width - thumbDrawableSize.width / 2) {
-                    width - thumbDrawableSize.width
+                leftThumbBound.left = if(it.x <= thumbDrawableSize.width / 2 + seekBarPadding) {
+                    seekBarPadding
+                } else if(it.x >= width - thumbDrawableSize.width / 2 - seekBarPadding) {
+                    width - thumbDrawableSize.width - seekBarPadding
                 } else {
                     (it.x - thumbDrawableSize.width / 2).toInt()
                 }
-                thumbBound.right = thumbBound.left + thumbDrawableSize.width
+                leftThumbBound.right = leftThumbBound.left + thumbDrawableSize.width
                 invalidate()
             }
 
