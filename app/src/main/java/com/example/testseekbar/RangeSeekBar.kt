@@ -19,9 +19,10 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     private var leftThumb: Thumb
     private var rightThumb: Thumb
     private val testPaint = Paint()
+    private var defaultLinePaint = Paint()
+    private var activeLinePaint = Paint()
 
     private var screenHeight = 0f
-    private var screenWidth = 0f
 
     private var activeLineColor = 0
     private var defaultLineColor = 0
@@ -30,7 +31,6 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     private var seekBarPadding = 0
     private var leftBorder = 0.0f
     private var rightBorder = 0.0f
-    private var defaultLinePaint = Paint()
     private var lineTopPosition = 0.0f
     private var lineBottomPosition = 0.0f
 
@@ -57,13 +57,15 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
         defaultLinePaint.color = defaultLineColor
         defaultLinePaint.style = Paint.Style.FILL
 
+        activeLinePaint.color = activeLineColor
+        activeLinePaint.style = Paint.Style.FILL
+
         lineTopPosition
     }
 
     override fun onSizeChanged(newWidth: Int, newHeight: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(newWidth, newHeight, oldw, oldh)
         screenHeight = newHeight.toFloat()
-        screenWidth = newWidth.toFloat()
 
         leftThumb.screenSizeChanged(newHeight)
         rightThumb.screenSizeChanged(newHeight)
@@ -84,11 +86,15 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
 
         usingCanvas.drawRect(leftBorder, lineTopPosition, rightBorder, lineBottomPosition,
             defaultLinePaint)
+        usingCanvas.drawRect(leftThumb.bound.left, lineTopPosition, rightThumb.bound.right,
+            lineBottomPosition, activeLinePaint)
+
         leftThumb.draw(usingCanvas)
         rightThumb.draw(usingCanvas)
     }
 
     private fun drawTestLines(usingCanvas: Canvas) {
+        usingCanvas.drawColor(Color.GREEN)
         usingCanvas.drawLine(leftBorder, 0.0f, leftBorder, height.toFloat(), testPaint)
         usingCanvas.drawLine(rightBorder, 0.0f, rightBorder, height.toFloat(), testPaint)
     }
