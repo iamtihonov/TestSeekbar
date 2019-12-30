@@ -94,12 +94,11 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
                               distanceY: Float): Boolean {
             val it = e2 ?: return true
             if (clickLeftThumb) {
-                val leftPosition = getLeftPosition(it)
+                val leftPosition = getLeftPosition(it, true)
                 leftThumb.updateLeftPosition(leftPosition)
                 invalidate()
             } else if (clickRightThumb) {
-                //leftBorder = max(leftBorder, leftThumb.bound.right - leftThumb.halfWidth)
-                val leftPosition = getLeftPosition(it)
+                val leftPosition = getLeftPosition(it, false)
                 rightThumb.updateLeftPosition(leftPosition)
                 invalidate()
             }
@@ -110,12 +109,24 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     }
 
     @Suppress("CascadeIf")
-    private fun getLeftPosition(it: MotionEvent): Int {
+    private fun getLeftPosition(it: MotionEvent, isLeft: Boolean): Int {
         val halfWidth = leftThumb.halfWidth
-        return if (it.x <= leftBorder + halfWidth) {
+        val usingLeftBorder = if(isLeft) {//С учетом текущего положения второй перделки
             leftBorder
-        } else if (it.x >= rightBorder - halfWidth) {
-            rightBorder - leftThumb.width
+        } else {
+            leftThumb.bound.right
+        }
+
+        val usingRightBorder = if(isLeft) {//С учетом текущего положения второй перделки
+            rightThumb.bound.left
+        } else {
+            rightBorder
+        }
+
+        return if (it.x <= usingLeftBorder + halfWidth) {
+            usingLeftBorder
+        } else if (it.x >= usingRightBorder - halfWidth) {
+            usingRightBorder - leftThumb.width
         } else {
             (it.x - halfWidth).toInt()
         }
