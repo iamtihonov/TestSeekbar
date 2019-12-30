@@ -3,6 +3,8 @@ package com.example.testseekbar
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.util.Log
@@ -19,6 +21,7 @@ import androidx.core.content.res.ResourcesCompat
 class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attrs) {
     private var leftThumb: Thumb
     private var rightThumb: Thumb
+    private val testPaint = Paint()
 
     private var screenHeight = 0f
     private var activeLineColor = 0
@@ -26,6 +29,8 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     private var lineHeight = 0
     private var touchPadding = 0
     private var seekBarPadding = 0
+    private var leftBorder = 0
+    private var rightBorder = 0
 
     init {
         context?.apply {
@@ -45,6 +50,7 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
         rightThumb = Thumb(rightThumbDrawable, Rect())
 
         leftThumbBound.right = leftThumbBound.left + leftThumb.width
+        testPaint.color = Color.RED
     }
 
     override fun onSizeChanged(newWidth: Int, newHeight: Int, oldw: Int, oldh: Int) {
@@ -55,11 +61,19 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
 
         rightThumb.bound.right = newWidth - seekBarPadding
         rightThumb.bound.left = rightThumb.bound.right - rightThumb.width
+
+        leftBorder = seekBarPadding
+        rightBorder = newWidth - seekBarPadding
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         val usingCanvas = canvas ?: return
+
+        usingCanvas.drawLine(leftBorder.toFloat(), 0.0f, leftBorder.toFloat(),
+            height.toFloat(), testPaint)
+        usingCanvas.drawLine(rightBorder.toFloat(), 0.0f, rightBorder.toFloat(),
+            height.toFloat(), testPaint)
         leftThumb.draw(usingCanvas)
         rightThumb.draw(usingCanvas)
     }
@@ -69,8 +83,8 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
         private var clickRightThumb = false
 
         override fun onDown(e: MotionEvent): Boolean {
-            clickLeftThumb = leftThumb.bound.contains(e.x.toInt(), e.y.toInt())
-            clickRightThumb = rightThumb.bound.contains(e.x.toInt(), e.y.toInt())
+            clickLeftThumb = leftThumb.contains(e)
+            clickRightThumb = rightThumb.contains(e)
             Log.d("testScroll", "onScroll() contains = $clickLeftThumb")
             return clickLeftThumb
         }
@@ -79,34 +93,31 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float,
                               distanceY: Float): Boolean {
             val it = e2 ?: return true
-
-            val leftBorder = leftThumb.halfWidth + seekBarPadding
-            val rightBorder = width - leftThumb.halfWidth - seekBarPadding
             if (clickLeftThumb) {
-                val leftPosition = if (it.x <= leftBorder) {
-                    seekBarPadding
-                } else if (it.x >= rightBorder) {
-                    rightBorder - leftThumb.halfWidth
-                } else {
-                    (it.x - leftThumb.halfWidth).toInt()
-                }
+                val leftPosition = getLeftPosition(it)
                 leftThumb.updateLeftPosition(leftPosition)
                 invalidate()
             } else if (clickRightThumb) {
-                val leftPosition = if (it.x <= leftBorder) {
-                    seekBarPadding
-                } else if (it.x >= rightBorder) {
-                    rightBorder - leftThumb.halfWidth
-                } else {
-                    (it.x - leftThumb.halfWidth).toInt()
-                }
-
+                //leftBorder = max(leftBorder, leftThumb.bound.right - leftThumb.halfWidth)
+                val leftPosition = getLeftPosition(it)
                 rightThumb.updateLeftPosition(leftPosition)
                 invalidate()
             }
 
             Log.d("testScroll", "onScroll() x2 = ${e2.x}")
             return true
+        }
+    }
+
+    @Suppress("CascadeIf")
+    private fun getLeftPosition(it: MotionEvent): Int {
+        val halfWidth = leftThumb.halfWidth
+        return if (it.x <= leftBorder + halfWidth) {
+            leftBorder
+        } else if (it.x >= rightBorder - halfWidth) {
+            rightBorder - leftThumb.width
+        } else {
+            (it.x - halfWidth).toInt()
         }
     }
 
