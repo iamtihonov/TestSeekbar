@@ -23,9 +23,6 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     private var activeLinePaint = Paint()
 
     private var screenHeight = 0f
-
-    private var activeLineColor = 0
-    private var defaultLineColor = 0
     private var lineHeight = 0
     private var touchPadding = 0
     private var seekBarPadding = 0
@@ -35,16 +32,19 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     private var lineBottomPosition = 0.0f
 
     init {
+        var activeLineColor = 0
+        var defaultLineColor = 0
+
         context?.apply {
             activeLineColor = ContextCompat.getColor(this, R.color.blue_52_172_250)
             defaultLineColor = ContextCompat.getColor(this, R.color.grey_229_232_237)
-            lineHeight = resources.getDimensionPixelSize(R.dimen.size_3dp)
-            touchPadding = resources.getDimensionPixelSize(R.dimen.size_5dp)
-            seekBarPadding = resources.getDimensionPixelSize(R.dimen.size_22dp)
         }
 
         val leftThumbDrawable = ResourcesCompat.getDrawable(resources, R.drawable.test, null)
         val rightThumbDrawable = ResourcesCompat.getDrawable(resources, R.drawable.test, null)
+        lineHeight = resources.getDimensionPixelSize(R.dimen.size_3dp)
+        touchPadding = resources.getDimensionPixelSize(R.dimen.size_5dp)
+        seekBarPadding = resources.getDimensionPixelSize(R.dimen.size_22dp)
 
         val leftThumbBound = RectF()
         leftThumbBound.left = seekBarPadding.toFloat()
@@ -59,8 +59,6 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
 
         activeLinePaint.color = activeLineColor
         activeLinePaint.style = Paint.Style.FILL
-
-        lineTopPosition
     }
 
     override fun onSizeChanged(newWidth: Int, newHeight: Int, oldw: Int, oldh: Int) {
