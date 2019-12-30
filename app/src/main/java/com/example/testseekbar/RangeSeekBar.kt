@@ -67,14 +67,21 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     }
 
     private val scrollListener = object : GestureDetector.SimpleOnGestureListener() {
+        private var downContains = false
+
         override fun onDown(e: MotionEvent): Boolean {
-            return leftThumbBound.contains(e.x.toInt(), e.y.toInt())
+            downContains = leftThumbBound.contains(e.x.toInt(), e.y.toInt())
+            Log.d("testScroll", "onScroll() contains = $downContains")
+            return downContains
         }
 
         @Suppress("CascadeIf")
         override fun onScroll(e1: MotionEvent?, e2: MotionEvent?, distanceX: Float,
                               distanceY: Float): Boolean {
-            Log.d("testScroll", "onScroll() x1 = ${e1?.x}")
+            if(!downContains) {
+                return false
+            }
+
             Log.d("testScroll", "onScroll() x2 = ${e2?.x}")
             e2?.let {
                 leftThumbBound.left = if(it.x <= thumbDrawableSize.width / 2 + seekBarPadding) {
