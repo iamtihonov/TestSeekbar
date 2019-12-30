@@ -3,6 +3,7 @@ package com.example.testseekbar
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Rect
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.Log
@@ -26,9 +27,8 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
     private var startRangleValue = 0
     private var endRangeValue = 100
     private var thumbDrawableSize = Size()
-    private var topThumbPosition = 0
-    private var bottomThumbPosition = 0
     private var horizontalScrollPosition = 0
+    private var thumbBound = Rect()
 
     init {
         context?.apply {
@@ -41,21 +41,22 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
         val width = thumbDrawable?.intrinsicWidth ?: 0
         val height =  thumbDrawable?.intrinsicHeight ?: 0
         thumbDrawableSize = Size(width, height)
+        thumbBound.left = 0
+        thumbBound.right = thumbBound.left + thumbDrawableSize.width
     }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
         screenHeight = h.toFloat()
-        topThumbPosition = ((screenHeight - thumbDrawableSize.height) / 2).toInt()
-        bottomThumbPosition = (screenHeight - topThumbPosition).toInt()
+        thumbBound.top = ((screenHeight - thumbDrawableSize.height) / 2).toInt()
+        thumbBound.bottom = (screenHeight - thumbBound.top).toInt()
     }
 
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
         val usingCanvas = canvas ?: return
 
-        thumbDrawable?.setBounds(horizontalScrollPosition, topThumbPosition,
-            horizontalScrollPosition + thumbDrawableSize.width, bottomThumbPosition)
+        thumbDrawable?.bounds = thumbBound
         thumbDrawable?.draw(usingCanvas)
     }
 
@@ -70,13 +71,14 @@ class RangeSeekBar(context: Context?, attrs: AttributeSet?) : View(context, attr
             Log.d("testScroll", "onScroll() x1 = ${e1?.x}")
             Log.d("testScroll", "onScroll() x2 = ${e2?.x}")
             e2?.let {
-                horizontalScrollPosition = if(it.x <= thumbDrawableSize.width / 2) {
+                thumbBound.left = if(it.x <= thumbDrawableSize.width / 2) {
                     0
                 } else if(it.x >= width - thumbDrawableSize.width / 2) {
                     width - thumbDrawableSize.width
                 } else {
                     (it.x - thumbDrawableSize.width / 2).toInt()
                 }
+                thumbBound.right = thumbBound.left + thumbDrawableSize.width
                 invalidate()
             }
 
